@@ -15,7 +15,7 @@ char input[TAB_SIZE], device[TAB_SIZE], user[TAB_SIZE], curr_path[TAB_SIZE];
 char ext[] = "exit", help[] = "help", cd[] = "cd";
 char * polecenia[LEN] = {cd, ext, help};
 char * in_sep[10];
-int res;
+int res, wyn, liczydlo, cpid;
 
 int changed(char *zmien_dir);
 void pomoc();
@@ -27,8 +27,10 @@ int main() {
     int uid = getlogin_r(user, sizeof(user));
     int host = gethostname(device, sizeof(device));
     while(!0){
-        int wyn;
-        int liczydlo=0;
+        for(int i=0;i<10;i++){
+            in_sep[i] = NULL;
+        }
+        liczydlo=0;
         char * path = getcwd(curr_path, TAB_SIZE);
         printf("%s@%s:[%s]$ ", user, device, curr_path); fgets(input, TAB_SIZE, stdin);
         input[strcspn(input, "\n")] = 0;
@@ -50,7 +52,7 @@ int main() {
             }
         }
         else {
-            int cpid = fork();
+            cpid = fork();
             if(cpid==-1){
                 perror("fork()");
             }
@@ -64,19 +66,17 @@ int main() {
                 perror("execvp()");
             }
         }
-        for(int i=0;i<10;i++){
-            in_sep[i] = NULL;
-        }
     }
 }
 
 int changed(char *zmien_dir) {
     char pop[] = "-", dom[] = "~";
-    if (!strcmp(zmien_dir, pop)) {
-        zmien_dir = last_dir;
-    } else if (!strcmp(zmien_dir, dom)) {
+    if (zmien_dir==NULL || !strcmp(zmien_dir, dom)) {
         char * homedir = getenv("HOME");
         zmien_dir = homedir;
+    }
+    else if (!strcmp(zmien_dir, pop)) {
+        zmien_dir = last_dir;
     }
     int zmiana = chdir(zmien_dir);
     if (strcmp(zmien_dir, curr_path)!=0) {
@@ -129,11 +129,13 @@ void clean(char * string, char *usun){
 
 int exe(){
     char *table[10];
-    for(int i=1;i<=sizeof(in_sep);i++){
-        if(i!=sizeof(in_sep)){
-            table[i-1]= in_sep[i];
-        } else {table[i]=NULL;}
-    }
+    int coun=0;
+    while(in_sep[coun]!=NULL){
+        table[coun]=in_sep[coun];
+        coun++;
+        }
+    table[coun]=NULL;
+
     int wynik = execvp(input, table);
     return wynik;
 }
